@@ -1,0 +1,19 @@
+from analysis.Cx_annulirostris.count_subtype_kmers.process import count_subtype_kmers_across_samples
+import polars as pl
+
+def main():
+    dataset = "COSMOS3"
+    kmer_file = "/Users/afor0966/Documents/code/multipathogen_genomics/results/Cx_annulirostris/Cx_annulirostris.subtype_private_kmers.min_fraction_0.5.tsv"
+    counts_dir = f"/Users/afor0966/Documents/code/multipathogen_genomics/results/{dataset}/kmer_counts/Cx_annulirostris"
+    abundance_results_file = "/Users/afor0966/Documents/code/multipathogen_genomics/results/COSMOS1-4/species_id_and_abundance/clustered_0.995_pid_trimmed/COSMOS1-4.broad_dataset.basic_filtering.tsv"
+    subtypes_to_test = ["ann AUS", "ann S-AUS", "ann SI", "ann PNG-1", "ann PNG-2"]
+    # subtypes_to_test = ["ann S-AUS", "ann AUS"]
+    # run analysis
+    results_df = count_subtype_kmers_across_samples(kmer_file, counts_dir, abundance_results_file, subtypes_to_test)
+    print(results_df['count'].describe())
+    # print samples where count > 0
+    print(results_df.select(["sample", "kmer", "subtype", "count"]))
+    results_df.write_csv(f"/Users/afor0966/Documents/code/multipathogen_genomics/results/Cx_annulirostris/subtype_kmer_counts/{dataset}_Cx_annulirostris_subtype_kmer_counts.min_fraction_0.5.csv")
+
+if __name__ == "__main__":
+    main()
