@@ -50,26 +50,7 @@ def main():
     capture_positive_nc2_threshold = 0.05
     # make combined dataframe for plotting
     df = combine_ct_dedup_and_nc2_data(cosmos_metadata, nc2_data, dedup_reads_data, virus_acronyms, genome_coverage_groups, genome_coverage_labels)
-    # TODO: Verify this suspected sample switch with TG. Swap only the Ct
-    # profiles; nc2 and all other metadata remain assigned to their sample IDs.
-    samples_to_swap = ["23-013-27955_S44", "23-013-28313_S17"]
-    viruses_to_swap = ["stratfordvirus", "rossrivervirus"]
-    first_sample_first_ct = df.filter((pl.col("sample") == samples_to_swap[0]) & (pl.col("virus") == viruses_to_swap[0]))["ct_value"].item()
-    first_sample_second_ct = df.filter((pl.col("sample") == samples_to_swap[0]) & (pl.col("virus") == viruses_to_swap[1]))["ct_value"].item()
-    second_sample_first_ct = df.filter((pl.col("sample") == samples_to_swap[1]) & (pl.col("virus") == viruses_to_swap[0]))["ct_value"].item()
-    second_sample_second_ct = df.filter((pl.col("sample") == samples_to_swap[1]) & (pl.col("virus") == viruses_to_swap[1]))["ct_value"].item()
-    df = df.with_columns(
-        # pl.when((pl.col("sample") == samples_to_swap[0]) & (pl.col("virus") == viruses_to_swap[0]))
-        # .then(second_sample_first_ct)
-        pl.when((pl.col("sample") == samples_to_swap[1]) & (pl.col("virus") == viruses_to_swap[1]))
-        .then(pl.lit(0))
-        # .when((pl.col("sample") == samples_to_swap[0]) & (pl.col("virus") == viruses_to_swap[1]))
-        # .then(second_sample_second_ct)
-        .when((pl.col("sample") == samples_to_swap[1]) & (pl.col("virus") == viruses_to_swap[0]))
-        .then(second_sample_second_ct)
-        .otherwise(pl.col("ct_value"))
-        .alias("ct_value")
-    )
+
     # plot results
     os.makedirs(f"{RESULTS_DIR}/virus/plots", exist_ok=True)
     # # original codetection matrix
