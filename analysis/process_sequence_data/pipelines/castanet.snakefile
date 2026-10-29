@@ -74,6 +74,7 @@ rule run_castanet:
             -DoKrakenPrefilter False \
             -DoTrimming False \
             -DoConsensus True \
+            -ConsensusMind 2 \
             -PostFilt {params.post_filter} \
             -NThreads {resources.cpus} \
             2>&1 | tee "$castanet_log"
