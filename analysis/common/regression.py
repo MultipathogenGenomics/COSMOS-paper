@@ -1,8 +1,3 @@
-"""Single-predictor OLS and binary logistic regression with an intercept.
-
-Transform responses before fitting. Inverse-transforming the fitted mean and
-its interval does not estimate the arithmetic mean on the original scale.
-"""
 
 from dataclasses import dataclass
 
@@ -139,11 +134,6 @@ class LogisticRegression:
 
 
 def fit_logistic_regression(x, y, confidence_level=0.95):
-    """Fit logit(P(y=1)) = intercept + slope*x to finite paired observations.
-
-    y must contain both 0 and 1. Reject constant predictors, separation and
-    failed fits. Requires statsmodels; existing OLS callers do not import it.
-    """
     import warnings
     from statsmodels.discrete.discrete_model import Logit
 
