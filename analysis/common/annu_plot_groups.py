@@ -13,7 +13,7 @@ SITE_AVERAGES_FILE = f"{RESULTS_DIR}/publication_figures/tables/cx_annulirostris
 def annu_abundance_filter():
     abundance = pl.col("Culex annulirostris proportion")
     threshold = ANNU_ABUNDANCE_THRESHOLD_FOR_COLOUR
-    return abundance.is_finite() & ((abundance >= 0) if threshold == 0 else (abundance > threshold))
+    return abundance.is_finite() & (abundance > threshold)
 
 
 def add_annu_site_clusters(df, buffer=AGG_SITE_FOR_AVERAGE_BUFFER):

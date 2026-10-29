@@ -614,7 +614,8 @@ def plot_SDI_boxplot(ax, df: pl.DataFrame):
     )
     category_saus_prop = (
         plot_source_df.filter(
-            pl.col("avg_subtype_ratio").is_not_null()
+            annu_abundance_filter()
+            & pl.col("avg_subtype_ratio").is_not_null()
             & pl.col("avg_subtype_ratio").is_finite()
         )
         .group_by(category_col, maintain_order=True)
@@ -625,6 +626,9 @@ def plot_SDI_boxplot(ax, df: pl.DataFrame):
         )
     )
     coastal_urban_rural_palette = {
+        category: "#D9D9D9"
+        for category in plot_source_df[category_col].unique().to_list()
+    } | {
         category: cmap(proportion)
         for category, proportion in zip(
             category_saus_prop[category_col].to_list(),

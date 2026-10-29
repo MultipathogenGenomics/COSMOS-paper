@@ -26,6 +26,9 @@ def prepare_cx_annulirostris_coastal_association(metadata_file: str, file_templa
     """Reproduce the coastal analysis independently of map coordinate filters."""
     subtype_df = collate_subpopulation_results(file_template, datasets)
     metadata = load_metadata(metadata_file)[["sample", "distance_to_coast_km"]]
+    abundance = pd.read_csv("results/publication_figures/data/combined_abundance_data.tsv")
+    detected_samples = abundance.loc[abundance["Culex annulirostris"] > 0, "sample"]
+    subtype_df = subtype_df[subtype_df["sample"].isin(detected_samples)]
     joined = subtype_df.merge(metadata, on="sample", how="inner", validate="many_to_one")
     for column in ("min_count", "avg_subtype_ratio", "distance_to_coast_km"):
         joined[column] = pd.to_numeric(joined[column], errors="coerce")
