@@ -32,7 +32,7 @@ def prepare_cx_annulirostris_coastal_association(metadata_file: str, file_templa
     joined = subtype_df.merge(metadata, on="sample", how="inner", validate="many_to_one")
     for column in ("min_count", "avg_subtype_ratio", "distance_to_coast_km"):
         joined[column] = pd.to_numeric(joined[column], errors="coerce")
-    return joined.loc[joined["min_count"] > 20].replace(
+    return joined.loc[joined["min_count"] >= 20].replace(
         [float("inf"), -float("inf")], float("nan")
     ).dropna(subset=["avg_subtype_ratio", "distance_to_coast_km"])
 

@@ -41,7 +41,7 @@ def main():
             "min_count_threshold": 20,
             "complement_ratio_column": "avg_subtype_ratio",
             "complement_output_column": "non_subtype_ratio",
-            "summary_filters": "metadata samples only; min_count > 20; valid avg_subtype_ratio; latitude and longitude present",
+            "summary_filters": "metadata samples only; min_count >= 20; valid avg_subtype_ratio; latitude and longitude present",
             "to_add_to_legend": {"PNG-1": subtype_colours["PNG-1"], "PNG-2": subtype_colours["PNG-2"], "SI": subtype_colours["SI"]},
             "draw_type": "gradient"
         },

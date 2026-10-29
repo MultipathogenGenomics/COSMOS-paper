@@ -563,7 +563,7 @@ def plot_cx_annulirostris_coastal_association(data: pd.DataFrame, output_plot_fi
     summary = dict(
         analysis="Cx_annulirostris_S_AUS_proportion_vs_distance_from_coast",
         input_files=";".join(input_files), metadata_file=metadata_file,
-        filters="metadata samples only; Culex annulirostris abundance > 0; min_count > 20; avg_subtype_ratio finite; distance_to_coast_km finite",
+        filters="metadata samples only; Culex annulirostris abundance > 0; min_count >= 20; avg_subtype_ratio finite; distance_to_coast_km finite",
         response="S_AUS_proportion", predictor="distance_to_coast_km", response_transform="identity",
         formula=f"S_AUS_proportion = {fit.intercept:.8g} + {fit.slope:.8g} * distance_to_coast_km",
         **fit.summary(), slope_per_km=fit.slope, slope_per_100km=100 * fit.slope,

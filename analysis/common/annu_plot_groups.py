@@ -69,7 +69,7 @@ def load_annu_plot_points(
         "sample", pl.col("Culex annulirostris").alias("Culex annulirostris proportion"))
     virus = pl.read_csv(virus_file, separator="\t").select(
         pl.col("sampleid").alias("sample"), pl.col("murrayvalleyencephalitisvirus").alias("MVEV"))
-    return (ratios.filter(pl.col("min_count") > ANNU_MIN_COUNT_THRESHOLD)
+    return (ratios.filter(pl.col("min_count") >= ANNU_MIN_COUNT_THRESHOLD)
             .join(metadata, on="sample", how="inner", validate="1:1")
             .join(abundance, on="sample", how="left", validate="1:1")
             .join(virus, on="sample", how="left", validate="1:1")
