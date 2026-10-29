@@ -2,3 +2,4 @@
 /results
 *__init__*
 *cpython*
+/.snakemake
