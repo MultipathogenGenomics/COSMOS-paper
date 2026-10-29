@@ -1,12 +1,13 @@
+from analysis.common.paths import RESULTS_DIR
 # process and combine virus data for plotting
 
 import os
 from pathlib import Path
 
 import polars as pl
-from .align import compute_coverage_at_each_position_using_samtools
-from ..common.io import parse_json
-from .gather_seqs import find_sample_entry_in_multikey_dict
+from analysis.virus_detection.scripts.align import compute_coverage_at_each_position_using_samtools
+from analysis.common.io import parse_json
+from analysis.virus_detection.scripts.gather_seqs import find_sample_entry_in_multikey_dict
 import subprocess
 
 def filter_pcr_positive(data: pl.DataFrame) -> pl.DataFrame:
@@ -386,7 +387,7 @@ def build_virus_coverage_plotting_data(virus_list: list[str], castanet_nc2_file:
             "position",
             pl.col("depth").alias("coverage"),
         ).write_csv(
-            "results/virus/data/virus_coverage_per_sample.tsv",
+            f"{RESULTS_DIR}/virus/data/virus_coverage_per_sample.tsv",
             separator="\t",
         )
         prepared_coverage_df = prepare_virus_coverage_to_plot(combined_coverage_df, virus_acronyms)

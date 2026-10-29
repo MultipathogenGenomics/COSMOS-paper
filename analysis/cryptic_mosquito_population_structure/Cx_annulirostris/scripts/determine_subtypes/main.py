@@ -1,17 +1,18 @@
-from analysis.Cx_annulirostris.determine_subtypes.process import find_Cx_annulirostris_subtype_defining_snps, find_unique_kmers_between_Cx_annulirostris_subtypes
+from analysis.common.paths import DATA_DIR, RESULTS_DIR
+from analysis.cryptic_mosquito_population_structure.Cx_annulirostris.scripts.determine_subtypes.process import find_Cx_annulirostris_subtype_defining_snps, find_unique_kmers_between_Cx_annulirostris_subtypes
 import os
 import sys
 
 def main():
 
     # input files
-    fragment_fasta = "/Users/afor0966/Documents/code/multipathogen_genomics/data/targets/Cx_annulirostris_Hemmerter_et_al/Cx_annulirostris_diversity.fasta"
-    fragment_metadata = "/Users/afor0966/Documents/code/multipathogen_genomics/data/targets/Cx_annulirostris_Hemmerter_et_al/Cx_annulirostris_fragment_metadata.tsv"
-    reference_fasta = "/Users/afor0966/Documents/code/multipathogen_genomics/data/targets/mozz_2024-11-01_min1kb_AF_trial_update_plus_additional_COX1s.fasta"
+    fragment_fasta = f"{DATA_DIR}/references/lineages/Cx_annulirostris_COX1_fragments_Hemmerter_et_al.fasta"
+    fragment_metadata = f"{DATA_DIR}/references/lineages/Cx_annulirostris_COX1_lineages_Hemmerter_et_al.tsv"
+    reference_fasta = f"{DATA_DIR}/references/lineages/NC_054323.1_Culex_annulirostris_COX1_1430-2966.fasta"
     reference_contig = "mosquito_NC_054323.1-1430-2966-Culex-annulirostris-isolate-W01-mitochondrion"
     kmer_length = 31
-    tmp_output_dir = "/Users/afor0966/Documents/code/multipathogen_genomics/scratch/Cx_annulirostris"
-    outputs_dir = "/Users/afor0966/Documents/code/multipathogen_genomics/results/Cx_annulirostris"
+    tmp_output_dir = f"{RESULTS_DIR}/intermediates/Cx_annulirostris"
+    outputs_dir = f"{RESULTS_DIR}/Cx_annulirostris"
     all_subtypes = ["ann PNG-1", "ann PNG-2", "ann S-AUS", "ann SI"]
 
     # make sure tmp output dir exists

@@ -1,4 +1,6 @@
-from analysis.Cx_annulirostris.compute_subtype_snp_ratios.process import compute_snp_ratios_for_subtype_across_samples, make_results_readable
+from analysis.common.software import TABULATE_ALIGNMENTS_EXECUTABLE
+from analysis.common.paths import RESULTS_DIR
+from analysis.cryptic_mosquito_population_structure.Cx_annulirostris.scripts.compute_subtype_snp_ratios.process import compute_snp_ratios_for_subtype_across_samples, make_results_readable
 import os
 import polars as pl
 
@@ -32,8 +34,8 @@ def summarise_readable_results(readable_df: pl.DataFrame, dataset: str, comparis
 
 def main():
     datasets = ["COSMOS1", "COSMOS2", "COSMOS3", "COSMOS4"]
-    snp_dir = "/Users/afor0966/Documents/code/multipathogen_genomics/results/Cx_annulirostris"
-    output_dir = "/Users/afor0966/Documents/code/multipathogen_genomics/results/Cx_annulirostris/subtype_snp_ratios"
+    snp_dir = f"{RESULTS_DIR}/Cx_annulirostris"
+    output_dir = f"{RESULTS_DIR}/Cx_annulirostris/subtype_snp_ratios"
     comparisons = {
         "AUS_vs_S-AUS": "Cx_annulirostris.SNPs_between_AUS_and_S-AUS.tsv",
         "AUS_S-AUS_PNG-1": "Cx_annulirostris.SNPs_between_AUS_S-AUS_and_PNG-1.tsv",
@@ -42,12 +44,12 @@ def main():
         "all_subtypes": "Cx_annulirostris.SNPs_between_subtype_and_other_fragments.tsv",
     }
     target_id = "mosquito_NC_054323.1-1430-2966-Culex-annulirostris-isolate-W01-mitochondrion"
-    tabulate_alignments_executable = "/Users/afor0966/Documents/code/software/iorek/build/apps/tabulate-alignments"
+    tabulate_alignments_executable = TABULATE_ALIGNMENTS_EXECUTABLE
 
     os.makedirs(output_dir, exist_ok=True)
 
     for dataset in datasets:
-        bam_dir = f"/Users/afor0966/Documents/code/multipathogen_genomics/results/{dataset}/align_kma_assigned/clustered_0.995_pid_trimmed/Cx_annulirostris"
+        bam_dir = f"{RESULTS_DIR}/{dataset}/align_kma_assigned/clustered_0.995_pid_trimmed/Cx_annulirostris"
         for comparison, snp_filename in comparisons.items():
             snp_file = os.path.join(snp_dir, snp_filename)
             output_path = os.path.join(

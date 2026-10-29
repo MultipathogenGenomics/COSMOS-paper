@@ -3,8 +3,6 @@ import subprocess
 import io
 import os
 import numpy as np
-from analysis.Cx_annulirostris.compute_subtype_snp_ratios.plots import scatter_snp_ratios_and_kma
-from analysis.mosquito_virus_comparisons.common.utils import make_predictor_table
 
 def run_tabulate_alignments(sample_bam: str, position: int, tabulate_alignments_executable: str, target_id: str, mapq_threshold: int) -> pl.DataFrame:
     # use tabulate alignments to get pileup across kmer
@@ -119,51 +117,3 @@ def make_results_readable(df: pl.DataFrame, snp_file: str) -> pl.DataFrame:
             rows.append(row)
     readable_df = pl.DataFrame(rows)
     return readable_df
-
-def combine_snp_ratio_with_abundance_ratios(snp_ratio_df: pl.DataFrame, abundance_results_file: str, kma_target_linker: dict) -> pl.DataFrame:
-    # get average snp ratio for each sample
-    subtype_label = kma_target_linker["subtype"]["label"]
-    snp_ratio_df = snp_ratio_df.with_columns(
-        pl.col(f"{subtype_label}_ratio").mean().over("sample").alias(f"{subtype_label}_avg_ratio")
-    ).unique(subset=["sample"])
-    # parse abundance file
-    abundance_df = pl.read_csv(abundance_results_file, separator='\t')
-    # make predictor table for kma targets
-    kma_df = make_predictor_table(
-        abundance_df, 
-        predictor="kma:read_count", 
-        predictor_threshold=0, 
-        identity_threshold=0.0, 
-        template_identity_threshold=0.0, 
-        coverage_threshold=0.0, 
-        observed_threshold=0, 
-        sum_over_subtypes=False)
-    subtype_target = kma_target_linker["subtype"]["target"]
-    non_subtype_target = kma_target_linker["non_subtype"]["target"]
-    kma_df = kma_df.with_columns(
-        kma_ratio=(pl.col(subtype_target) / (pl.col(subtype_target) + pl.col(non_subtype_target)))
-    )
-    # get kallisto read counts
-    kallisto_df = make_predictor_table(
-        abundance_df, 
-        predictor="kallisto:read_count", 
-        predictor_threshold=0, 
-        identity_threshold=0.0, 
-        template_identity_threshold=0.0, 
-        coverage_threshold=0.0, 
-        observed_threshold=0, 
-        sum_over_subtypes=False)
-    kallisto_df = kallisto_df.with_columns(
-        kallisto_ratio=(pl.col(subtype_target) / (pl.col(subtype_target) + pl.col(non_subtype_target)))
-    )
-    kma_df = kma_df.join(kallisto_df.select(["sample", "kallisto_ratio"]), on="sample", how="left")
-    # join dfs
-    combined_results = snp_ratio_df.join(kma_df.select(["sample", "kma_ratio", "kallisto_ratio"]), on="sample", how="left")
-    return combined_results
-
-def compare_abundance_and_snp_ratios(snp_ratio_df: pl.DataFrame, kma_results_file: str, kma_target_linker: dict, output_file: str, abundance_type: str="kma") -> None:
-    combined_df = combine_snp_ratio_with_abundance_ratios(snp_ratio_df, kma_results_file, kma_target_linker)
-    subtype_label = kma_target_linker["subtype"]["label"]
-    scatter_snp_ratios_and_kma(combined_df, x_col=f"{abundance_type}_ratio", y_col=f"{subtype_label}_avg_ratio", plot_file=output_file)
-
-        

@@ -1,4 +1,4 @@
-from analysis.kmers.find_unique_kmers_between_samples.process import make_blast_db, blast_kmer, extract_best_blast_hit
+from analysis.common.BLAST_helpers import make_blast_db, blast_kmer, extract_best_blast_hit
 import os
 from Bio import SeqIO
 import subprocess

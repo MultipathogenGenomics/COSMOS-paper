@@ -1,4 +1,5 @@
 """Shared Cx. annulirostris map membership and site averages (no plotting imports)."""
+from analysis.common.paths import RESULTS_DIR
 from pathlib import Path
 
 import polars as pl
@@ -6,7 +7,7 @@ import polars as pl
 ANNU_ABUNDANCE_THRESHOLD_FOR_COLOUR = 0.0
 AGG_SITE_FOR_AVERAGE_BUFFER = 0.01
 ANNU_MIN_COUNT_THRESHOLD = 20
-SITE_AVERAGES_FILE = "results/publication_figures/tables/cx_annulirostris_site_averages.tsv"
+SITE_AVERAGES_FILE = f"{RESULTS_DIR}/publication_figures/tables/cx_annulirostris_site_averages.tsv"
 
 
 def annu_abundance_filter():
@@ -53,8 +54,8 @@ def write_annu_site_averages(sites, output_file=SITE_AVERAGES_FILE):
 
 def load_annu_plot_points(
     metadata_file="data/COSMOS_metadata/COSMOS1-4.traps_combined_metadata.tsv",
-    abundance_file="results/publication_figures/data/combined_abundance_data.tsv",
-    virus_file="data/final_castanet_data/COSMOS1-4.final_castanet_nc2.tsv",
+    abundance_file=f"{RESULTS_DIR}/publication_figures/data/combined_abundance_data.tsv",
+    virus_file=f"{RESULTS_DIR}/final_castanet_data/COSMOS1-4.final_castanet_nc2.tsv",
 ):
     """Reproduce the map's point selection from text inputs, without rendering."""
     ratios = pl.concat([

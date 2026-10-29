@@ -1,8 +1,8 @@
 
 import os
 import subprocess
-from ..common.io import parse_json
-from .gather_seqs import find_sample_entry_in_multikey_dict
+from analysis.common.io import parse_json
+from analysis.virus_detection.scripts.gather_seqs import find_sample_entry_in_multikey_dict
 
 def ensure_fasta_index(fasta: str) -> None:
     if not os.path.exists(f"{fasta}.fai"):

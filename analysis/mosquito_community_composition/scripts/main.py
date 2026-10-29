@@ -1,4 +1,5 @@
-from .process import (
+from analysis.common.paths import RESULTS_DIR
+from analysis.mosquito_community_composition.scripts.process import (
     prepare_abundance_geospatial_data,
     prepare_embedding_comparison_data,
     write_abundance_geospatial_description,
@@ -6,7 +7,7 @@ from .process import (
     write_simpsons_diversity_index,
     write_species_trap_counts,
 )
-from .plot import (
+from analysis.mosquito_community_composition.scripts.plot import (
     plot_abundance_geospatial_overview,
     plot_embedding_comparison,
     plot_pc1_distance_to_coast_association,
@@ -18,17 +19,17 @@ import os
 
 def main():
     assignment_reference = "COSMOS-plus-SS-pools"
-    estimate_abundance_dir = f"results/estimate-abundance/{assignment_reference}"
+    estimate_abundance_dir = f"{RESULTS_DIR}/estimate-abundance/{assignment_reference}"
     sample_sets = ["COSMOS1", "COSMOS2", "COSMOS3", "COSMOS4"]
     abundance_filename = "abundance_within_filter_pass_reads.tsv"
     embedding_method = "PCA"
     pca_n_components = 5
     metadata_file = "data/COSMOS_metadata/COSMOS1-4.traps_combined_metadata.tsv"
     # virus_nc2_file = "data/castanetv9.2-output/COSMOS1-4_castanetv9.2_nc2.tsv"
-    virus_nc2_file = "data/final_castanet_data/COSMOS1-4.final_castanet_nc2.tsv" # updated to final castanet data
+    virus_nc2_file = f"{RESULTS_DIR}/final_castanet_data/COSMOS1-4.final_castanet_nc2.tsv" # updated to final castanet data
     s_aus_file_template = "data/cryptic_subpops/{dataset}.Cx_annulirostris_collated_results.tsv"
-    output_dir = "results/abundance-geospatial/plots"
-    table_dir = "results/abundance-geospatial/tables"
+    output_dir = f"{RESULTS_DIR}/abundance-geospatial/plots"
+    table_dir = f"{RESULTS_DIR}/abundance-geospatial/tables"
 
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(table_dir, exist_ok=True)

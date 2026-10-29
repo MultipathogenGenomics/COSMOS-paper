@@ -1,4 +1,4 @@
-from analysis.Cx_annulirostris.determine_subtypes.process import make_msa_seq_matrix, find_differences_between_subtype_and_all_others, find_Cx_annulirostris_frag_position_in_ref
+from analysis.cryptic_mosquito_population_structure.Cx_annulirostris.scripts.determine_subtypes.process import make_msa_seq_matrix, find_differences_between_subtype_and_all_others, find_Cx_annulirostris_frag_position_in_ref
 import polars as pl
     
 def find_Ae_notoscriptus_cluster_defining_snps(msa_path: str, fragment_metadata: str, reference_path:str, reference_contig:str, tmp_dir:str, ignore_clusters:list=None) -> pl.DataFrame:

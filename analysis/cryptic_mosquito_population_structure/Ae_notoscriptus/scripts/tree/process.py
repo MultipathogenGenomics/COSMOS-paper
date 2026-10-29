@@ -1,7 +1,7 @@
-from analysis.Cx_annulirostris.determine_subtypes.process import msa_with_mafft
-from analysis.cluster_targets_by_pid.process import parse_fasta_file, compute_pairwise_differences_between_sequences, cluster_sequences_by_pid
-from analysis.cluster_targets_by_pid.plots import plot_tree
-from analysis.Cx_annulirostris.determine_subtypes.process import (find_Cx_annulirostris_frag_position_in_ref, 
+from analysis.cryptic_mosquito_population_structure.Cx_annulirostris.scripts.determine_subtypes.process import msa_with_mafft
+from analysis.mosquito_community_composition.scripts.cluster_targets_by_pid.process import parse_fasta_file, compute_pairwise_differences_between_sequences, cluster_sequences_by_pid
+from analysis.mosquito_community_composition.scripts.cluster_targets_by_pid.plots import plot_tree
+from analysis.cryptic_mosquito_population_structure.Cx_annulirostris.scripts.determine_subtypes.process import (find_Cx_annulirostris_frag_position_in_ref,
                                                                   get_ids_from_fasta, 
                                                                   extract_Cx_annulirostris_amplicon_region_from_reference,
                                                                   find_unique_kmers_for_subtype)

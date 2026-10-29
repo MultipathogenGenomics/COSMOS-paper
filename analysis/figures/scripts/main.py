@@ -1,19 +1,20 @@
-from .process import make_mt_genome_coverage_file, parse_annulirostris_mt_coverage, prepare_heatmap_data
-from .enrichment_and_estimation_figure import plot_enrichment_and_estimation, plot_enrichment_and_nc2, quick_plot_of_nc2_of_cox1_across_traps
-from .results_figure import plot_results_figure
-from .virus_scatters_and_heatmap import plot_virus_scatters_and_heatmap, supplementary_nc2_curve_figure, wuhan6_supp_figure, bfv_supp_figure
-from ..common.abundance import read_abundance_for_sample_sets
+from analysis.common.paths import RESULTS_DIR
+from analysis.figures.scripts.process import make_mt_genome_coverage_file, parse_annulirostris_mt_coverage, prepare_heatmap_data
+from analysis.figures.scripts.enrichment_and_estimation_figure import plot_enrichment_and_estimation, plot_enrichment_and_nc2, quick_plot_of_nc2_of_cox1_across_traps
+from analysis.figures.scripts.results_figure import plot_results_figure
+from analysis.figures.scripts.virus_scatters_and_heatmap import plot_virus_scatters_and_heatmap, supplementary_nc2_curve_figure, wuhan6_supp_figure, bfv_supp_figure
+from analysis.common.abundance import read_abundance_for_sample_sets
 import os
 import polars as pl
 
 def main():
-    plot_dir = "results/publication_figures/plots"
-    data_dir = "results/publication_figures/data"
+    plot_dir = f"{RESULTS_DIR}/publication_figures/plots"
+    data_dir = f"{RESULTS_DIR}/publication_figures/data"
     os.makedirs(plot_dir, exist_ok=True)
     os.makedirs(data_dir, exist_ok=True)
 
     metadata_file = "data/COSMOS_metadata/COSMOS1-4.traps_combined_metadata.tsv"
-    virus_nc2_file = "data/final_castanet_data/COSMOS1-4.final_castanet_nc2.tsv"
+    virus_nc2_file = f"{RESULTS_DIR}/final_castanet_data/COSMOS1-4.final_castanet_nc2.tsv"
 
     ## Figure 1 - infographic
 
@@ -33,7 +34,6 @@ def main():
         prepare_heatmap_data(heatmap_data_file)
 
     # # virus_coverage_file = "results/virus/plots/virus_coverage_plotting_data.csv"
-    # virus_coverage_file = "/Users/afor0966/Documents/code/COSMOS-analysis/data/final_castanet_data/COSMOS1-4.final_castanet_virus_coverage_per_sample.tsv"
     # output_file = f"{plot_dir}/enrichment_and_estimation.png"
     # plot_enrichment_and_estimation(mitochondria_annu_coverage_file, virus_coverage_file, heatmap_data_file, output_file)
     # virus_per_sample_coverage_file = "data/final_castanet_data/COSMOS1-4.final_castanet_virus_coverage_per_sample.tsv"
@@ -47,16 +47,16 @@ def main():
     # )
 
     # # Figure 3 - new
-    surveillance_validation_file = "results/surveillance-validation/surveillance_validation_data.tsv"
+    surveillance_validation_file = f"{RESULTS_DIR}/surveillance-validation/surveillance_validation_data.tsv"
     heatmap_data_file = os.path.join(data_dir, "heatmap_data.pkl")
-    virus_nc2_file = "data/final_castanet_data/COSMOS1-4.final_castanet_nc2.tsv"
+    virus_nc2_file = f"{RESULTS_DIR}/final_castanet_data/COSMOS1-4.final_castanet_nc2.tsv"
     # supplementary_nc2_curve_figure(
     #     metadata_file,
     #     virus_nc2_file,
     #     f"{plot_dir}/supplementary_nc2_curve.final.png",
     #     fit_bin_medians=True,
     # )
-    virus_dedup_file = "data/final_castanet_data/COSMOS1-4.final_castanet_reads_dedup.tsv"
+    virus_dedup_file = f"{RESULTS_DIR}/final_castanet_data/COSMOS1-4.final_castanet_reads_dedup.tsv"
     # virus_nc2_file = "data/castanetv9.3_output/COSMOS1-4_castanetv9.3_nc2.post_filt_false.tsv"
     # virus_dedup_file = "data/castanetv9.3_output/COSMOS1-4_castanetv9.3_reads_dedup.post_filt_false.tsv"
     output_file = f"{plot_dir}/validation_scatters_and_heatmap.final.png"

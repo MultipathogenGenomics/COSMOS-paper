@@ -1,13 +1,14 @@
+from analysis.common.paths import RESULTS_DIR
 from importlib import import_module
 import pickle
 import os
 import polars as pl
 import numpy as np
 
-assess_enrichment = import_module("analysis.assess-enrichment.process")
-abundance_validation = import_module("analysis.abundance-validation.process")
-from ..common.abundance import read_abundance_for_sample_sets
-from ..common.mosquito_ids import shorted_genus
+assess_enrichment = import_module("analysis.enrichment.scripts.assess_enrichment.process")
+abundance_validation = import_module("analysis.validation.scripts.process")
+from analysis.common.abundance import read_abundance_for_sample_sets
+from analysis.common.mosquito_ids import shorted_genus
 
 
 def shorten_italic_species_label(label: str) -> str:
@@ -32,22 +33,22 @@ def make_mt_genome_coverage_file(out_path: str):
         "Ochlerotatus": "data/mt_genomes/Aedes_vigilax_mt_genome.fasta"
     }
     # collate data
-    coverage_df = assess_enrichment.concat_coverage_data(samples_config, genomes_config, "results/assess-enrichment/coverage", genus_defaults)
-    coverage_df = assess_enrichment.add_alignment_positions_to_coverage_data(coverage_df, "results/assess-enrichment/alignments/references_aligned.fasta")
+    coverage_df = assess_enrichment.concat_coverage_data(samples_config, genomes_config, f"{RESULTS_DIR}/assess-enrichment/coverage", genus_defaults)
+    coverage_df = assess_enrichment.add_alignment_positions_to_coverage_data(coverage_df, f"{RESULTS_DIR}/assess-enrichment/alignments/references_aligned.fasta")
     # write the coverage data to a file
     coverage_df.write_csv(out_path)
 
 def prepare_heatmap_data(out_path: str):
-    estimate_abundance_dir = "results/estimate-abundance/COSMOS-plus-SS-pools"
+    estimate_abundance_dir = f"{RESULTS_DIR}/estimate-abundance/COSMOS-plus-SS-pools"
     control_sample_sets = ["COSMOS2_controls", "COSMOS5_controls", "COSMOS6_controls"]
     in_silico_sample_sets = ["in_silico_mixtures"]
     abundance_filename = "abundance_within_filter_pass_reads.tsv"
     joined_assignment_filename = "kallisto_kma_outputs_joined.tsv"
     annotations_file = "data/COSMOS-controls/COSMOS_controls_pubfig_annotations.tsv"
-    in_silico_metadata_file = "results/in-silico-mixtures/mixture_fastq/mixture_metadata.tsv"
+    in_silico_metadata_file = f"{RESULTS_DIR}/in-silico-mixtures/mixture_fastq/mixture_metadata.tsv"
     single_species_fastq_config = "config/single_species_controls.mosquito_cox1_extracted_fastq.json"
     assignment_reference_file = (
-        "results/reference-set/COSMOS-plus-SS-pools/"
+        f"{RESULTS_DIR}/reference-set/COSMOS-plus-SS-pools/"
         "COSMOS-plus-SS-pools.representatives.fasta"
     )
     single_species_abundance_file = (
@@ -262,7 +263,7 @@ def combine_data_for_results_figure(
     )
 
     # going to make divide Cx annulirostris into two cols, S-AUS and AUS
-    cryptic_process = import_module("analysis.cryptic-subpopulations.process")
+    cryptic_process = import_module("analysis.cryptic_mosquito_population_structure.Cx_annulirostris.scripts.plotting.process")
 
     panel_config = {
         "label": "Culex annulirostris",
@@ -311,7 +312,7 @@ def combine_data_for_results_figure(
 def parse_annulirostris_mt_coverage(output_file_path: str, metadata_file: str = None) -> pl.DataFrame:
     coverage_data = []
     for sample_set in ["COSMOS1", "COSMOS2", "COSMOS3", "COSMOS4"]:
-        coverage_dir = f"/Users/afor0966/Documents/code/multipathogen_genomics/results/{sample_set}/aligned/Cx_annulirostris_mt"
+        coverage_dir = f"{RESULTS_DIR}/{sample_set}/aligned/Cx_annulirostris_mt"
         for sample in os.listdir(coverage_dir):
             sample_dir = os.path.join(coverage_dir, sample)
             for filename in os.listdir(sample_dir):

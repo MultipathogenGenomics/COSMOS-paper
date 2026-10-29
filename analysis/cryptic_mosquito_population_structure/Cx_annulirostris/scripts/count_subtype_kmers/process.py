@@ -38,4 +38,3 @@ def count_subtype_kmers_across_samples(kmer_file: str, counts_dir: str, abundanc
             result_df = result_df.with_columns(pl.col("count").cast(pl.Int64))
             all_results.append(result_df)
     return pl.concat(all_results)
-    

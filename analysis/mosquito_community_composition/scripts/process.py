@@ -8,7 +8,7 @@ from scipy import stats
 from sklearn.decomposition import PCA
 from umap import UMAP
 
-from ...common.abundance import read_abundance_for_sample_sets
+from analysis.common.abundance import read_abundance_for_sample_sets
 
 
 COASTAL_THRESHOLD_KM = 20

@@ -1,4 +1,5 @@
-from .process import (
+from analysis.common.paths import RESULTS_DIR
+from analysis.virus_detection.scripts.process import (
     combine_ct_dedup_and_nc2_data, 
     compute_virus_codetection_matrix, 
     write_virus_codetection_matrix, 
@@ -7,13 +8,13 @@ from .process import (
     get_coverage_across_bam,
     build_virus_coverage_plotting_data
 )
-from .plot import (
+from analysis.virus_detection.scripts.plot import (
     plot_virus_codetection_heatmap_discrete, plot_virus_results, plot_virus_codetection_heatmap_continuous_with_boxplot, plot_virus_codetection_with_boxplot_with_cbars,
     virus_coverage_plot_combined, virus_coverage_plot_paneled
 )
-from .gather_seqs import gather_seqs_from_castanet_into_fasta
-from .align import make_consensus_from_input_ref
-from .draw_LSV import draw_LSV_diagram, draw_LSV_coverage_plot
+from analysis.virus_detection.scripts.gather_seqs import gather_seqs_from_castanet_into_fasta
+from analysis.virus_detection.scripts.align import make_consensus_from_input_ref
+from analysis.virus_detection.scripts.draw_LSV import draw_LSV_diagram, draw_LSV_coverage_plot
 import os
 import polars as pl
 
@@ -70,7 +71,7 @@ def main():
         .alias("ct_value")
     )
     # plot results
-    os.makedirs("results/virus/plots", exist_ok=True)
+    os.makedirs(f"{RESULTS_DIR}/virus/plots", exist_ok=True)
     # # original codetection matrix
     # codetection_matrix = compute_virus_codetection_matrix(df, virus_acronyms, capture_positive_nc2_threshold)
     # categories = {
@@ -240,11 +241,11 @@ def main():
 
     # let's get coverage across the viruses
     df = build_virus_coverage_plotting_data(viruses_to_collect, nc2_data, COSMOS_sample_config, virus_acronyms, detection_threshold=0.05, metadata_file=cosmos_metadata) # if change must re run
-    df.write_csv("results/virus/plots/virus_coverage_plotting_data.csv")
-    df = pl.read_csv("results/virus/plots/virus_coverage_plotting_data.csv")
-    virus_coverage_plot_output = "results/virus/plots/virus_coverage_plot_combined.png"
+    df.write_csv(f"{RESULTS_DIR}/virus/plots/virus_coverage_plotting_data.csv")
+    df = pl.read_csv(f"{RESULTS_DIR}/virus/plots/virus_coverage_plotting_data.csv")
+    virus_coverage_plot_output = f"{RESULTS_DIR}/virus/plots/virus_coverage_plot_combined.png"
     virus_coverage_plot_combined(df, virus_coverage_plot_output)
-    virus_coverage_plot_output_paneled = "results/virus/plots/virus_coverage_plot_paneled.png"
+    virus_coverage_plot_output_paneled = f"{RESULTS_DIR}/virus/plots/virus_coverage_plot_paneled.png"
     virus_coverage_plot_paneled(df, virus_coverage_plot_output_paneled)
 
 if __name__ == "__main__":

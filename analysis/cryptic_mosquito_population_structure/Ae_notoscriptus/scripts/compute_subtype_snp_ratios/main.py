@@ -1,13 +1,15 @@
-from analysis.Cx_annulirostris.compute_subtype_snp_ratios.process import compute_snp_ratios_for_subtype_across_samples, make_results_readable
+from analysis.common.software import TABULATE_ALIGNMENTS_EXECUTABLE
+from analysis.common.paths import RESULTS_DIR
+from analysis.cryptic_mosquito_population_structure.Cx_annulirostris.scripts.compute_subtype_snp_ratios.process import compute_snp_ratios_for_subtype_across_samples, make_results_readable
 import os
 
 def main():
     dataset = "COSMOS4"
-    snp_file = "/Users/afor0966/Documents/code/multipathogen_genomics/results/Ae_notoscriptus/subtypes/Ae_notoscriptus_cluster_defining_snps_1_vs_2_or_3.tsv"
-    bam_dir = f"/Users/afor0966/Documents/code/multipathogen_genomics/results/{dataset}/align_kma_assigned/clustered_0.995_pid_trimmed/Ae_notoscriptus"
+    snp_file = f"{RESULTS_DIR}/Ae_notoscriptus/subtypes/Ae_notoscriptus_cluster_defining_snps_1_vs_2_or_3.tsv"
+    bam_dir = f"{RESULTS_DIR}/{dataset}/align_kma_assigned/clustered_0.995_pid_trimmed/Ae_notoscriptus"
     target_id = "KM676218.1_Aedes_notoscriptus_isolate_MC04_mitochondrion_complete_genome"
-    tabulate_alignments_executable = "/Users/afor0966/Documents/code/software/iorek/build/apps/tabulate-alignments"
-    output_path = f"/Users/afor0966/Documents/code/multipathogen_genomics/results/Ae_notoscriptus/subtype_snp_ratios/{dataset}.Ae_notoscriptus_subtype_defining_snp_ratios_across_samples.1_vs_2or3.tsv"
+    tabulate_alignments_executable = TABULATE_ALIGNMENTS_EXECUTABLE
+    output_path = f"{RESULTS_DIR}/Ae_notoscriptus/subtype_snp_ratios/{dataset}.Ae_notoscriptus_subtype_defining_snp_ratios_across_samples.1_vs_2or3.tsv"
     # make sure output dir exists
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     # analysis
@@ -21,8 +23,8 @@ def main():
     results_df.write_csv(readable_output_path, separator='\t')
 
     # run same but 2 vs 3
-    snp_file = "/Users/afor0966/Documents/code/multipathogen_genomics/results/Ae_notoscriptus/subtypes/Ae_notoscriptus_cluster_defining_snps_2_vs_3_fixed.tsv"
-    output_path = f"/Users/afor0966/Documents/code/multipathogen_genomics/results/Ae_notoscriptus/subtype_snp_ratios/{dataset}.Ae_notoscriptus_subtype_defining_snp_ratios_across_samples_2_vs_3.tsv"
+    snp_file = f"{RESULTS_DIR}/Ae_notoscriptus/subtypes/Ae_notoscriptus_cluster_defining_snps_2_vs_3_fixed.tsv"
+    output_path = f"{RESULTS_DIR}/Ae_notoscriptus/subtype_snp_ratios/{dataset}.Ae_notoscriptus_subtype_defining_snp_ratios_across_samples_2_vs_3.tsv"
     # analysis
     results_df = compute_snp_ratios_for_subtype_across_samples(snp_file, bam_dir, target_id, tabulate_alignments_executable)
     results_df.write_csv(output_path, separator='\t')

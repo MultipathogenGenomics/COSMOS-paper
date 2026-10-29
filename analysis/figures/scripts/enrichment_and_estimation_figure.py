@@ -2,14 +2,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 import seaborn as sns
-from ..virus.plot import virus_coverage_plot_paneled
+from analysis.virus_detection.scripts.plot import virus_coverage_plot_paneled
 from matplotlib.ticker import FuncFormatter, NullLocator
 from matplotlib.text import Text
 from importlib import import_module
 import pickle
-from .virus_scatters_and_heatmap import plot_nc2_curve_panels
+from analysis.figures.scripts.virus_scatters_and_heatmap import plot_nc2_curve_panels
 
-abundance_validation = import_module("analysis.abundance-validation.plot")
+abundance_validation = import_module("analysis.validation.scripts.plot")
 
 A4_WIDTH_INCHES = 8.27
 
@@ -371,6 +371,9 @@ def plot_enrichment_and_nc2(
     virus_nc2_file: str,
     output_file: str,
     fit_bin_medians: bool = True,
+    mitochondrial_data=None,
+    virus_coverage_data=None,
+    positive_ct_data=None,
 ) -> None:
 
     fig = plt.figure(figsize=(A4_WIDTH_INCHES, 6.5), constrained_layout=False)
@@ -384,8 +387,8 @@ def plot_enrichment_and_nc2(
     nc2_spec = fig_spec[0, 1]
 
     # plot mosquito mito cov
-    mito_df = pl.read_csv(mitochondria_coverage_file, separator=",")
-    virus_df = pl.read_csv(virus_coverage_file, separator="\t")
+    mito_df = mitochondrial_data if mitochondrial_data is not None else pl.read_csv(mitochondria_coverage_file, separator=",")
+    virus_df = virus_coverage_data if virus_coverage_data is not None else pl.read_csv(virus_coverage_file, separator="\t")
     mitochondrial_ax = plot_mitochondrial_coverage(
         mito_df, fig, mos_mito_spec,
         zoom_end=4_500, dashed_boundaries=True,
@@ -411,7 +414,7 @@ def plot_enrichment_and_nc2(
     scatter_ax, _ = plot_nc2_curve_panels(
         metadata_file, virus_nc2_file, fig,
         nc2_spec, None, output_file,
-        fit_bin_medians=fit_bin_medians,
+        fit_bin_medians=fit_bin_medians, positive_ct_data=positive_ct_data,
     )
     scatter_ax.set_xlabel("Cycle threshold in original sample", fontsize=9)
     scatter_ax.set_ylabel("Virus genome coverage", fontsize=9)

@@ -1,7 +1,7 @@
 import os
 from Bio import SeqIO
 import polars as pl
-from ..common.io import parse_json
+from analysis.common.io import parse_json
 
 def find_sample_entry_in_multikey_dict(sample_dict: dict, sample: str) -> dict:
     for nest in sample_dict:

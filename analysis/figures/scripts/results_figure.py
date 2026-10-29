@@ -1,3 +1,4 @@
+from analysis.common.paths import RESULTS_DIR
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
@@ -6,8 +7,8 @@ from importlib import import_module
 from matplotlib.colors import LinearSegmentedColormap
 from matplotlib.transforms import blended_transform_factory
 from mpl_toolkits.axes_grid1.inset_locator import mark_inset
-from .process import combine_data_for_results_figure
-from ..common.mosquito_ids import shorted_genus
+from analysis.figures.scripts.process import combine_data_for_results_figure
+from analysis.common.mosquito_ids import shorted_genus
 import geodatasets
 import geopandas as gpd
 from matplotlib.patches import Circle
@@ -15,7 +16,7 @@ from shapely.geometry import LineString
 from matplotlib.transforms import Affine2D
 from matplotlib.patches import ConnectionPatch
 
-from ..common.annu_plot_groups import (
+from analysis.common.annu_plot_groups import (
     ANNU_ABUNDANCE_THRESHOLD_FOR_COLOUR, AGG_SITE_FOR_AVERAGE_BUFFER,
     ANNU_MIN_COUNT_THRESHOLD, add_annu_site_clusters, annu_abundance_filter,
     average_annu_sites, write_annu_site_averages,
@@ -183,9 +184,9 @@ def draw_circle_around_traps(ax, traps_to_circle, df, outline_colour="black"):
         )
         ax.add_patch(circle)
 
-def plot_cx_annulirostris_map(fig, subplot_spec, map_file: str, metadata_file: str, df: pl.DataFrame, traps_to_circle: list = None, traps_to_bars: list = None, outline_colour: str = "black") -> tuple:
-    cryptic_process = import_module("analysis.cryptic-subpopulations.process")
-    cryptic_plot = import_module("analysis.cryptic-subpopulations.plot")
+def plot_cx_annulirostris_map(fig, subplot_spec, map_file: str, metadata_file: str, df: pl.DataFrame, traps_to_circle: list = None, traps_to_bars: list = None, outline_colour: str = "black", release_lineage_points=None, sydney_inset_bounds=None, site_averages_file=None) -> tuple:
+    cryptic_process = import_module("analysis.cryptic_mosquito_population_structure.Cx_annulirostris.scripts.plotting.process")
+    cryptic_plot = import_module("analysis.cryptic_mosquito_population_structure.Cx_annulirostris.scripts.plotting.plot")
     subtype_colours = {
         "S-AUS": COASTAL_PALETTE[0],
         "AUS": COASTAL_PALETTE[1],
@@ -203,14 +204,22 @@ def plot_cx_annulirostris_map(fig, subplot_spec, map_file: str, metadata_file: s
         "complement_output_column": "non_subtype_ratio",
         "draw_type": "gradient"
     }
-    subpopulation_data = cryptic_process.prepare_cryptic_subpopulation_data(
-        map_file,
-        metadata_file,
-        [panel_config],
-        ["COSMOS1", "COSMOS2", "COSMOS3", "COSMOS4"],
-    )
-    panel = subpopulation_data["panels"][0]
-    map_boundary = subpopulation_data["map_boundary"]
+    if release_lineage_points is None:
+        subpopulation_data = cryptic_process.prepare_cryptic_subpopulation_data(
+            map_file,
+            metadata_file,
+            [panel_config],
+            ["COSMOS1", "COSMOS2", "COSMOS3", "COSMOS4"],
+        )
+        panel = subpopulation_data["panels"][0]
+        map_boundary = subpopulation_data["map_boundary"]
+    else:
+        map_boundary = cryptic_process.load_nsw_act_boundary(map_file).to_crs("EPSG:4326")
+        point_data = release_lineage_points.to_pandas()
+        points = gpd.GeoDataFrame(point_data, geometry=gpd.points_from_xy(
+            point_data["longitude"], point_data["latitude"]), crs="EPSG:4326")
+        panel = {"points": points,
+                 "gradient_colours": panel_config["gradient_colours"]}
 
     samples_to_plot = set(df.filter(annu_abundance_filter())["sample"].to_list())
     points_to_plot = panel["points"][
@@ -229,7 +238,8 @@ def plot_cx_annulirostris_map(fig, subplot_spec, map_file: str, metadata_file: s
         on="sample", how="left", validate="1:1",
     )
     averaged_sites = average_annu_sites(plotted_samples)
-    write_annu_site_averages(averaged_sites)
+    if site_averages_file is not None:
+        write_annu_site_averages(averaged_sites, site_averages_file)
 
     map_ax = fig.add_subplot(subplot_spec)
     map_min_x, _, map_max_x, _ = map_boundary.total_bounds
@@ -359,10 +369,11 @@ def plot_cx_annulirostris_map(fig, subplot_spec, map_file: str, metadata_file: s
         panel["gradient_colours"],
         radius=0.04,
     )
-    xmin, xmax, ymin, ymax = cryptic_plot.get_sydney_inset_limits(
-        panel["points"],
-        panel["points"].crs,
-    )
+    if sydney_inset_bounds is None:
+        xmin, xmax, ymin, ymax = cryptic_plot.get_sydney_inset_limits(
+            panel["points"], panel["points"].crs)
+    else:
+        xmin, xmax, ymin, ymax = sydney_inset_bounds
     inset_ax.set_xlim(xmin, xmax)
     inset_ax.set_ylim(ymin, ymax)
     inset_ax.set_aspect("equal")
@@ -1129,7 +1140,11 @@ def plot_results_figure(
         mosquito_abundance_file: str,
         virus_nc2_file: str,
         NSW_map_file: str,
-        out_file: str
+        out_file: str,
+        prepared_data=None,
+        release_lineage_points=None,
+        sydney_inset_bounds=None,
+        site_averages_file=None,
 ):
     fig = plt.figure(
         figsize=(7.5, 7),
@@ -1181,14 +1196,16 @@ def plot_results_figure(
     virus_bracket_spec = outer_grid[2, 1]
 
     # parse data - this is ordered
-    df = combine_data_for_results_figure(
-        metadata_file=metadata_file,
-        SDI_results_file=SDI_results_file,
-        mosquito_abundance_file=mosquito_abundance_file,
-        virus_nc2_file=virus_nc2_file,
-        map_file=NSW_map_file
-    )
-    df.write_csv("/Users/afor0966/Documents/code/COSMOS-analysis/tmp/results_figure_data.tsv", separator='\t')
+    if prepared_data is None:
+        df = combine_data_for_results_figure(
+            metadata_file=metadata_file,
+            SDI_results_file=SDI_results_file,
+            mosquito_abundance_file=mosquito_abundance_file,
+            virus_nc2_file=virus_nc2_file,
+            map_file=NSW_map_file
+        )
+    else:
+        df = prepared_data
     assert df.height == 219
     assert df["sample"].n_unique() == 219
 
@@ -1246,8 +1263,8 @@ def plot_results_figure(
         df=df,
         traps_to_circle=traps_to_circle,
         # traps_to_bars=traps_to_circle, # ask TG about those COSMOS did not detect
-        outline_colour=MVEV_COLOUR
-    )
+        outline_colour=MVEV_COLOUR, release_lineage_points=release_lineage_points,
+        sydney_inset_bounds=sydney_inset_bounds, site_averages_file=site_averages_file)
 
     # add the missing MVEV trap as a dot on the map
     add_the_missing_MVEV_trap_as_dot(ax_map, df, trap_id="23-020623-30091_S21", colour=MVEV_COLOUR)

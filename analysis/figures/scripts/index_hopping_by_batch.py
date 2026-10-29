@@ -1,3 +1,4 @@
+from analysis.common.paths import DATA_DIR, RESULTS_DIR
 import polars as pl
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -6,11 +7,11 @@ import json
 
 def parse_data():
     # parse files
-    nc2_post_filt_true = "/Users/afor0966/Documents/code/COSMOS-analysis/data/castanetv9.2-output/COSMOS1-4_castanetv9.2_nc2.tsv"
-    reads_dedup_post_filt_true = "/Users/afor0966/Documents/code/COSMOS-analysis/data/castanetv9.2-output/COSMOS1-4_castanetv9.2_reads_dedup.tsv"
-    nc2_post_filt_false = "/Users/afor0966/Documents/code/COSMOS-analysis/data/castanetv9.3_output/COSMOS1-4_castanetv9.3_nc2.post_filt_false.tsv"
-    reads_dedup_post_filt_false = "/Users/afor0966/Documents/code/COSMOS-analysis/data/castanetv9.3_output/COSMOS1-4_castanetv9.3_reads_dedup.post_filt_false.tsv"
-    config_file = "/Users/afor0966/Documents/code/COSMOS-analysis/config/COSMOS1-4.local.json"
+    nc2_post_filt_true = f"{DATA_DIR}/castanetv9.2-output/COSMOS1-4_castanetv9.2_nc2.tsv"
+    reads_dedup_post_filt_true = f"{DATA_DIR}/castanetv9.2-output/COSMOS1-4_castanetv9.2_reads_dedup.tsv"
+    nc2_post_filt_false = f"{DATA_DIR}/castanetv9.3_output/COSMOS1-4_castanetv9.3_nc2.post_filt_false.tsv"
+    reads_dedup_post_filt_false = f"{DATA_DIR}/castanetv9.3_output/COSMOS1-4_castanetv9.3_reads_dedup.post_filt_false.tsv"
+    config_file = "config/COSMOS1-4.json"
     metadata = "data/COSMOS_metadata/COSMOS1-4.traps_combined_metadata.tsv"
 
     with open(config_file, 'r') as f:
@@ -186,7 +187,7 @@ def main():
         "rossrivervirus": "RRV",
         "stratfordvirus": "STRV",
     }
-    output_dir = "results/publication_figures/plots"
+    output_dir = f"{RESULTS_DIR}/publication_figures/plots"
     nc2_df, reads_dedup_df = parse_data()
 
     # print max nc2 and dedup read count for a sample where BFV is <0.05 or <100 in PostFilt is True

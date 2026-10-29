@@ -1,26 +1,27 @@
+from analysis.common.paths import DATA_DIR, RESULTS_DIR
 import matplotlib.pyplot as plt
 import numpy as np
 import polars as pl
 import seaborn as sns
-from ..virus.plot import prepare_virus_overview_scatter_data, style_unique_read_count_axis, plot_line_of_best_fit_to_ax
-from ..virus.process import combine_ct_dedup_and_nc2_data
+from analysis.virus_detection.scripts.plot import prepare_virus_overview_scatter_data, style_unique_read_count_axis, plot_line_of_best_fit_to_ax
+from analysis.virus_detection.scripts.process import combine_ct_dedup_and_nc2_data
 from importlib import import_module
 import pickle
 from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 from pathlib import Path
-from ..common.mosquito_ids import shorted_genus
+from analysis.common.mosquito_ids import shorted_genus
 from scipy.optimize import curve_fit
-from ..common.regression import fit_linear_regression, log10_reads, inverse_log10_reads
+from analysis.common.regression import fit_linear_regression, log10_reads, inverse_log10_reads
 from scipy.cluster.hierarchy import linkage, leaves_list
 from scipy.spatial.distance import pdist
 
 
-abundance_validation = import_module("analysis.abundance-validation.plot")
+abundance_validation = import_module("analysis.validation.scripts.plot")
 
 A4_WIDTH_INCHES = 8.27
 
-def plot_virus_scatter(metadata_file: str, nc2_file: str, dedup_file: str, fig, spec, stats_output: str, legend_ax) -> dict:
+def plot_virus_scatter(metadata_file: str, nc2_file: str, dedup_file: str, fig, spec, stats_output: str, legend_ax, virus_data=None) -> dict:
     ax = fig.add_subplot(spec)
     virus_acronyms = {
         "stratfordvirus": "STRV",
@@ -45,7 +46,8 @@ def plot_virus_scatter(metadata_file: str, nc2_file: str, dedup_file: str, fig, 
             "#B30000",  # dark red
         ]
     # make a combined df
-    df = combine_ct_dedup_and_nc2_data(metadata_file, nc2_file, dedup_file, virus_acronyms, nc2_groups, nc2_labels)
+    df = (virus_data if virus_data is not None else
+          combine_ct_dedup_and_nc2_data(metadata_file, nc2_file, dedup_file, virus_acronyms, nc2_groups, nc2_labels))
     (
         completeness_data,
         completeness_specs,
@@ -223,7 +225,7 @@ def plot_mosquito_scatter(mosquito_df: pl.DataFrame, fig, spec, legend_ax, virus
         handletextpad=0.4,
     )
 
-def plot_virus_scatters_and_heatmap(metadata_file: str, virus_nc2_file: str, virus_dedup_file: str, mosquito_file: str, heatmap_data_file: str, output_file: str) -> None:
+def plot_virus_scatters_and_heatmap(metadata_file: str, virus_nc2_file: str, virus_dedup_file: str, mosquito_file: str, heatmap_data_file: str, output_file: str, *, virus_data=None, mosquito_data=None, control_heatmap=None, stats_output_file=None) -> None:
     # draw figure
     fig = plt.figure(
         figsize=(A4_WIDTH_INCHES*0.7, 9.5),
@@ -257,14 +259,16 @@ def plot_virus_scatters_and_heatmap(metadata_file: str, virus_nc2_file: str, vir
     mosquito_spec = scatter_grid[1, 1]
     abundance_spec = outer_grid[1, 1:3]
 
-    # parse files
-    mosquito_df = pl.read_csv(mosquito_file, separator='\t')
-    with open(heatmap_data_file, "rb") as handle:
-        heatmap_data = pickle.load(handle)
-
-    # plot virus nc2 vs ct scatter
-    stats_output_file = "results/publication_figures/tables/nc2_v_ct_line.txt"
-    virus_marker_map = plot_virus_scatter(metadata_file, virus_nc2_file, virus_dedup_file, fig, virus_spec, stats_output_file, virus_legend_ax)
+    # Release entry points supply parsed tables; retain file inputs for old callers.
+    mosquito_df = mosquito_data if mosquito_data is not None else pl.read_csv(mosquito_file, separator='\t')
+    if control_heatmap is None:
+        with open(heatmap_data_file, "rb") as handle:
+            heatmap_data = pickle.load(handle)
+    else:
+        heatmap_data = control_heatmap
+    virus_marker_map = plot_virus_scatter(
+        metadata_file, virus_nc2_file, virus_dedup_file, fig, virus_spec,
+        stats_output_file, virus_legend_ax, virus_data=virus_data)
 
     # plot mosquito program vs our estimates scatter
     plot_mosquito_scatter(mosquito_df, fig, mosquito_spec, mosquito_legend_ax, virus_marker_map)
@@ -373,35 +377,39 @@ def plot_nc2_curve_panels(
     boxplot_spec,
     output_file: str,
     fit_bin_medians: bool = False,
+    positive_ct_data=None,
 ):
     """Draw NC2 panels and sidecars; pass boxplot_spec=None for the curve alone."""
-    # parse files
-    metadata = pl.read_csv(metadata_file, separator='\t')
-    nc2 = pl.read_csv(virus_nc2_file, separator='\t')
+    if positive_ct_data is not None:
+        positive_cts = positive_ct_data
+    else:
+        # parse files
+        metadata = pl.read_csv(metadata_file, separator='\t')
+        nc2 = pl.read_csv(virus_nc2_file, separator='\t')
 
-    # for every positive ct in a sample across a list of viruses, make a table with nc2 value
-    nc2_with_metadata = nc2.join(metadata, left_on="sampleid", right_on="sample", how="right")
-    test_viruses = {
-        "barmahforestvirus": "BFV",
-        "edgehillvirus": "EHV",
-        "japaneseencephalitisvirus": "JEV",
-        "kokoberavirus": "KOK",
-        "murrayvalleyencephalitisvirus": "MVEV",
-        "rossrivervirus": "RRV",
-        "stratfordvirus": "STRV",
-    }  
-    positive_cts = pl.concat([
-        nc2_with_metadata.select(
-            "sample",
-            pl.lit(virus).alias("virus"),
-            pl.lit(acronym).alias("virus_acronym"),
-            pl.col(f"ct_{acronym}")
-            .cast(pl.Float64, strict=False)
-            .alias("ct_value"),
-            pl.col(virus).cast(pl.Float64).fill_null(0).alias("nc2"),
-        )
-        for virus, acronym in test_viruses.items()
-    ]).filter((pl.col("ct_value") > 0) & pl.col("ct_value").is_finite())
+        # for every positive ct in a sample across a list of viruses, make a table with nc2 value
+        nc2_with_metadata = nc2.join(metadata, left_on="sampleid", right_on="sample", how="right")
+        test_viruses = {
+            "barmahforestvirus": "BFV",
+            "edgehillvirus": "EHV",
+            "japaneseencephalitisvirus": "JEV",
+            "kokoberavirus": "KOK",
+            "murrayvalleyencephalitisvirus": "MVEV",
+            "rossrivervirus": "RRV",
+            "stratfordvirus": "STRV",
+        }
+        positive_cts = pl.concat([
+            nc2_with_metadata.select(
+                "sample",
+                pl.lit(virus).alias("virus"),
+                pl.lit(acronym).alias("virus_acronym"),
+                pl.col(f"ct_{acronym}")
+                .cast(pl.Float64, strict=False)
+                .alias("ct_value"),
+                pl.col(virus).cast(pl.Float64).fill_null(0).alias("nc2"),
+            )
+            for virus, acronym in test_viruses.items()
+        ]).filter((pl.col("ct_value") > 0) & pl.col("ct_value").is_finite())
 
     if positive_cts.is_empty():
         raise ValueError("No positive Ct values found for the selected viruses.")
@@ -709,10 +717,10 @@ def ISV_heatmap_figure(
 
 def wuhan6_supp_figure():
     ## PARSE IN ALL THE DATA
-    COSMOS1 = f"/Volumes/research-data/PRJ-CSM/DATA/2023-03-17_COSMOS1/castanet-insectvirs-output/COSMOS1_depth.csv"
-    COSMOS2 = f"/Volumes/research-data/PRJ-CSM/DATA/2023-06-22_COSMOS2/castanet-insectvirs-output/COSMOS2_depth.csv"
-    COSMOS3 = f"/Volumes/research-data/PRJ-CSM/DATA/2023-11-01_COSMOS3/castanet-insectvirs-output/COSMOS3_depth.csv"
-    COSMOS4 = "/Volumes/research-data/PRJ-CSM/DATA/2024-05-17_COSMOS4/castanet-insectvirs-output/COSMOS4_depth_with_clin.csv"
+    COSMOS1 = f"{DATA_DIR}/virus_detections/insect_specific_viruses/COSMOS1_depth.csv"
+    COSMOS2 = f"{DATA_DIR}/virus_detections/insect_specific_viruses/COSMOS2_depth.csv"
+    COSMOS3 = f"{DATA_DIR}/virus_detections/insect_specific_viruses/COSMOS3_depth.csv"
+    COSMOS4 = f"{DATA_DIR}/virus_detections/insect_specific_viruses/COSMOS4_depth.csv"
     # Read the per-sample depth summaries for all four batches.
     df1 = pl.read_csv(COSMOS1, separator=",")
     df2 = pl.read_csv(COSMOS2, separator=",")
@@ -721,8 +729,8 @@ def wuhan6_supp_figure():
     # Batch exports have different columns; align by name and fill absent fields with null.
     df = pl.concat([df1, df2, df3, df4], how="diagonal_relaxed")
     # filter samples to analysis set 
-    metadata = "/Users/afor0966/Documents/code/COSMOS-analysis/data/COSMOS_metadata/COSMOS1-4.traps_combined_metadata.tsv"
-    metadata_df = pl.read_csv(metadata, separator="\t")
+    from analysis.common.release_data_parsers import read_release_metadata, read_release_abundance
+    metadata_df = read_release_metadata()
     df = df.join(metadata_df, left_on="sampleid", right_on="sample", how="inner", validate="m:1")
     # print total number of probetypes with more than 0.5 in prop_npos_cov2 column in at least one sample
     probetypes = df.filter(pl.col("prop_npos_cov2") > 0.5).select("probetype").unique().to_series().to_list()
@@ -781,14 +789,12 @@ def wuhan6_supp_figure():
         sample_col="sample",
         longitude_col="longitude",
         output_path=(
-            "/Users/afor0966/Documents/code/COSMOS-analysis/"
-            "results/publication_figures/plots/ISVs_heatmap.png"
+            f"{RESULTS_DIR}/publication_figures/plots/ISVs_heatmap.png"
         )
     )
 
     ## WU6 ANALYSIS
-    abundance_data = "/Users/afor0966/Documents/code/COSMOS-analysis/results/publication_figures/data/combined_abundance_data.tsv"
-    abundance_df = pl.read_csv(abundance_data)
+    abundance_df = read_release_abundance()
     # filter df to where probetype is Wuhan-Mosquito-Virus
     wu6_df = df.filter(pl.col("probetype") == "Wuhan-Mosquito-Virus")
     # Keep every analysis sample with an abundance estimate, including no Wuhan detection.
@@ -872,10 +878,10 @@ def wuhan6_supp_figure():
         spine.set_linewidth(0.8)
     ax.tick_params(axis="both", which="major", length=4, width=0.8, color="black")
     fig.tight_layout(rect=[0, 0, 1, 0.87])
-    fig.savefig("/Users/afor0966/Documents/code/COSMOS-analysis/results/publication_figures/plots/wuhan6_supp_figure.png", dpi=300)
+    fig.savefig(f"{RESULTS_DIR}/publication_figures/plots/wuhan6_supp_figure.png", dpi=300)
     # save stats into a text file
     rsquared = fit.rvalue ** 2
-    with open("/Users/afor0966/Documents/code/COSMOS-analysis/results/publication_figures/plots/wuhan6_supp_figure_stats.txt", "w") as f:
+    with open(f"{RESULTS_DIR}/publication_figures/plots/wuhan6_supp_figure_stats.txt", "w") as f:
         f.write(f"Log10(read_count + 1) linear regression: slope={fit.slope:.4f}, intercept={fit.intercept:.4f}, r_value={fit.rvalue:.4f}, p_value={fit.pvalue:.4e}, std_err={fit.stderr:.4f}, n={n}\n")
         f.write(f"R-squared: {rsquared:.4f}\n")
         f.write("response_transform\tlog10(read_count + 1)\n")
@@ -886,7 +892,7 @@ def wuhan6_supp_figure():
 
 def bfv_supp_figure(
     input_file="data/BFVculture-dilutions/bfv_expt_COSMOS3.csv",
-    output_file="results/publication_figures/plots/bfv_supp_figure.png",
+    output_file=f"{RESULTS_DIR}/publication_figures/plots/bfv_supp_figure.png",
 ):
     """Standalone BFV dilution figure with OLS and Student-t mean intervals."""
     data = pl.read_csv(input_file)

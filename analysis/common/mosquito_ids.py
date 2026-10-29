@@ -35,8 +35,6 @@ def extract_genus_from_target_id(target_id, report_error: bool = False):
         return "unknown"
     
 def return_species_from_target_id(target_id):
-    if target_id.startswith("COSMOS-INDO-MC-28_spades_assembly"):
-        return "MC-28"
     id_eles = re.split(r"[-_\s]+", target_id)
     genus = extract_genus_from_target_id(target_id)
     genus_idx = id_eles.index(genus) if genus in id_eles else -1
@@ -65,3 +63,14 @@ def shorted_genus(species):
     current_genus = species.split(" ")[0]
     shortened_genus = species.replace(current_genus, replace_dict[current_genus])
     return shortened_genus
+
+
+# Retained from the original compare_kallisto_kma_minimap naming helpers.
+def shortened_mosquito_target_id(target_id):
+    # split by dashes or underscores
+    id_eles = re.split("-|_", target_id)
+    id_eles_to_keep = [ele for ele in id_eles if not ele.isnumeric() and ele not in
+                       ["mosquito", "NC", "cytochrome", "c", "oxidase", "subunit",
+                        "mitochondrial", "mitochondrion", "complete", "genome", "COI",
+                        "gene", "partial", "cds", "COX1"]]
+    return " ".join(id_eles_to_keep)

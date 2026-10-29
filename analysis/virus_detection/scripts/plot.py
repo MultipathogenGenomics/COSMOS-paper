@@ -8,8 +8,8 @@ from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 import seaborn as sns
 import numpy as np
-from ..common.regression import fit_linear_regression, log10_reads, inverse_log10_reads
-from .process import generate_matrix
+from analysis.common.regression import fit_linear_regression, log10_reads, inverse_log10_reads
+from analysis.virus_detection.scripts.process import generate_matrix
 import matplotlib.gridspec as gridspec
 
 def filter_pcr_positive(data: pl.DataFrame) -> pl.DataFrame:
