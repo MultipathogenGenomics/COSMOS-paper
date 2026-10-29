@@ -1,0 +1,52 @@
+"""Run from the repository root with --configfile and this file as --snakefile."""
+import os
+import re
+
+castanet = config.get("castanet", {})
+
+
+def get_castanet_fastq_paths(wc, config):
+    sample = config["sample_sets"][wc.sample_set]["samples"][wc.sample]
+    if wc.fastq_type == "raw":
+        return sample["R1"], sample["R2"]
+    if wc.fastq_type != "trimmed":
+        raise ValueError("fastq_type must be raw or trimmed")
+    stem = f'{config["scratch_dir"]}/{wc.sample_set}/pre-processed/trimmed/{wc.sample}/{wc.sample}'
+    return stem + "_R1_trimmed.fastq.gz", stem + "_R2_trimmed.fastq.gz"
+
+
+def assign_wt_ram_cpu_based_on_num_reads(wc, reads, boost=0):
+    # Fixed configurable resources replace the original cluster sizing helper.
+    return config.get("walltime", "04:00:00"), f'{config.get("memory_gb", 24)}G', max(0, config.get("threads", 16) - 8)
+
+
+def return_castanet_faidx_contigs(wc, config):
+    reference = config["sample_sets"][wc.sample_set]["castanet_targets"]
+    with open(reference) as handle:
+        return [line[1:].split()[0] for line in handle
+                if line.startswith(">") and "mosquitocox1" in line]
+
+
+def return_region_from_trimmed_id(region):
+    match = re.search(r":(\d+)-(\d+)$", region)
+    if match is None:
+        raise ValueError(f"Expected contig:start-end, got {region}")
+    return int(match[1]), int(match[2])
+
+
+def requested_outputs():
+    outputs = []
+    for batch, settings in config["sample_sets"].items():
+        for sample in settings["samples"]:
+            if "trim" in config.get("stages", ["trim"]):
+                outputs.extend(f'{config["scratch_dir"]}/{batch}/pre-processed/trimmed/{sample}/{sample}_R{mate}_trimmed.fastq.gz' for mate in [1, 2])
+            if "castanet" in config.get("stages", []):
+                outputs.append(f'{config["scratch_dir"]}/{batch}/castanet/{settings.get("castanet_version", "9.3")}/trimmed/{sample}/.castanet_done')
+    return outputs
+
+
+rule all:
+    input: requested_outputs()
+
+include: "pipelines/trim.snakefile"
+include: "pipelines/castanet.snakefile"

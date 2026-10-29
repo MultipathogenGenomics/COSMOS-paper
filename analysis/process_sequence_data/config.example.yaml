@@ -1,0 +1,35 @@
+# Run from the repository root. Replace example input/software paths.
+# These are the fields read by pipelines/trim.snakefile and castanet.snakefile.
+# Example command (after replacing input/software paths):
+# snakemake --snakefile analysis/process_sequence_data/Snakefile \
+#   --configfile analysis/process_sequence_data/config.example.yaml --cores 16
+# Add --use-envmodules only when using an HPC module system.
+stages: [trim]  # add castanet to run target mapping after trimming
+scratch_dir: results/process_sequence_data
+project: local
+threads: 16
+memory_gb: 24
+walltime: '04:00:00'
+# Castanet uses a separate environment; activation is a shell command.
+# Leave python_module empty on a workstation without environment modules.
+picard_jar: /path/to/picard.jar
+castanet:
+  '9.3':
+    python_module: ''
+    venv: /path/to/castanet/environment/bin/activate
+    python_path: /path/to/castanet/environment/bin/python
+    python_dir: /path/to/Castanet
+sample_sets:
+  COSMOS1:
+    adapters: /path/to/TruSeq3-PE.fa
+    castanet_version: '9.3'
+    post_filter: false  # true for the affected COSMOS2 batch
+    castanet_targets: data/references/castanet_reference_panel.fasta
+    samples:
+      example_sample:
+        R1: /path/to/example_sample_R1.fastq.gz
+        R2: /path/to/example_sample_R2.fastq.gz
+# Used only by optional COX1 extraction/reporting rules.
+target_sets:
+  castanet: [mosquitocox1_cluster0]
+  castanet_trimmed: ['mosquitocox1_cluster0:472-1402']
