@@ -26,7 +26,7 @@ def main():
 
     # find subtype private kmers which are present in at least some members of a subtype,
     # while remaining absent from all other subtypes
-    min_subtype_fraction = 0.5
+    min_subtype_fraction = 0.95
     private_kmers_df = find_unique_kmers_between_Cx_annulirostris_subtypes(
         fragment_metadata,
         fragment_fasta,
@@ -38,8 +38,6 @@ def main():
         f"Cx_annulirostris.subtype_private_kmers.min_fraction_{min_subtype_fraction}.tsv"
     )
     private_kmers_df.write_csv(output_file, separator='\t')
-    sys.exit()
-
     # find subtype defining SNPs
     output_file = os.path.join(outputs_dir, "Cx_annulirostris.SNPs_between_subtype_and_other_fragments.tsv")
     results = find_Cx_annulirostris_subtype_defining_snps(
