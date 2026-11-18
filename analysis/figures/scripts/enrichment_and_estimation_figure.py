@@ -240,7 +240,7 @@ def plot_enrichment_and_estimation(mitochondria_coverage_file: str, virus_covera
     # save the figure
     fig.savefig(output_file, dpi=300)
 
-def plot_virus_coverage_paneled(virus_df: pl.DataFrame, fig: plt.Figure, subplot_spec: plt.SubplotSpec) -> list[plt.Axes]:
+def plot_virus_coverage_paneled(virus_df: pl.DataFrame, fig: plt.Figure, subplot_spec: plt.SubplotSpec, virus_colours=None) -> list[plt.Axes]:
     virus_acronyms = {
         "stratfordvirus": "STRV",
         "rossrivervirus": "RRV",
@@ -294,9 +294,13 @@ def plot_virus_coverage_paneled(virus_df: pl.DataFrame, fig: plt.Figure, subplot
                 color="#BDBDBD", alpha=0.5, linewidth=0.4,
             )
         median_coverage = median_df.filter(pl.col("virus_acronym") == virus)
+        if virus_colours is not None and virus in virus_colours:
+            colour = virus_colours[virus]
+        else:
+            colour = "black"
         ax.plot(
             median_coverage["position"], median_coverage["median_coverage"],
-            color="black", linewidth=1.2,
+            color=colour, linewidth=1.2,
         )
         genome_length = coverage_df["position"].max()
         for boundary in [0, genome_length]:
@@ -396,7 +400,12 @@ def plot_enrichment_and_nc2(
     mitochondrial_ax.set_xlabel("Genome position (bp)", fontsize=9)
 
     # plot virus cov
-    virus_axes = plot_virus_coverage_paneled(virus_df, fig, virus_spec)
+    virus_colours = {
+        'JEV': 'tab:orange', 'KUN': 'tab:green', 'RRV': 'tab:blue',
+        'BFV': 'tab:purple', 'SINDV': 'tab:brown', 'STRV': 'tab:pink',
+        'KOK': 'tab:cyan', 'EHV': 'tab:olive', 'LSV': 'black','MVEV': 'tab:red'
+    }
+    virus_axes = plot_virus_coverage_paneled(virus_df, fig, virus_spec, virus_colours=virus_colours)
     # Both rows start at the same data-axis edge, despite different grid widths.
     coverage_left = mitochondrial_ax.get_position().x0
     for ax in virus_axes:
