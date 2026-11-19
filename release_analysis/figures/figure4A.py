@@ -18,7 +18,7 @@ def main():
                         metavar=('XMIN', 'XMAX', 'YMIN', 'YMAX'),
                         help='Inset extent in longitude/latitude; release lacks historical council labels')
     parser.add_argument('--site-averages-file', type=Path, help='Optional TSV export of map groups')
-    parser.add_argument('--output', type=Path, default=RESULTS_DIR / 'figure4A-B.png')
+    parser.add_argument('--output', type=Path, default=RESULTS_DIR / 'figure4A.png')
     args = parser.parse_args()
     if not args.map_file.is_file():
         parser.error(f'Map file not found: {args.map_file}')
