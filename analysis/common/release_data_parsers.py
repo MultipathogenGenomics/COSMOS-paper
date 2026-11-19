@@ -170,19 +170,19 @@ def prepare_release_control_heatmap(data_dir=RELEASE_DATA_DIR):
                      ('laboratory mixture','laboratory mixture'),('laboratory serial dilution','laboratory serial dilution')]:
         rows = group(kind).to_dicts()
         if key=='species':
-            rows.sort(key=lambda r:(genera[r['content'].split()[0]], next((i for i,c in enumerate(columns) if names[c]==r['content']),999)))
+            rows.sort(key=lambda r:(genera[r['expected_contents'].split()[0]], next((i for i,c in enumerate(columns) if names[c]==r['expected_contents']),999)))
         if key=='laboratory serial dilution':
             # Display sitiens:pipiens above vigilax:annulirostris as in the original figure.
-            rows.sort(key=lambda r:('vigilax' in r['content'], float(re.findall(r'([\d.]+)%',r['content'])[0])))
+            rows.sort(key=lambda r:('vigilax' in r['expected_contents'], float(re.findall(r'([\d.]+)%',r['expected_contents'])[0])))
         labels=[]
         for i,r in enumerate(rows):
-            if key=='species':labels.append(shorted_genus(r['content']))
+            if key=='species':labels.append(shorted_genus(r['expected_contents']))
             elif key=='morphology test':labels.append(f'Mixture {i+1}')
             elif key=='laboratory mixture':
-                labels.append('Ae.proc/Ae.mult/Cx.siti/Cx.pipi' if 'procax' in r['content'] else 'Cq.line/Ae.noto/Ae.vigi/Cx.annu')
+                labels.append('Ae.proc/Ae.mult/Cx.siti/Cx.pipi' if 'procax' in r['expected_contents'] else 'Cq.line/Ae.noto/Ae.vigi/Cx.annu')
             else:
-                percentages=re.findall(r'([\d.]+)%',r['content'])
-                if 'sitiens' in r['content']:percentages=percentages[::-1]
+                percentages=re.findall(r'([\d.]+)%',r['expected_contents'])
+                if 'sitiens' in r['expected_contents']:percentages=percentages[::-1]
                 labels.append(':'.join(percentages))
         data[key]=(pl.DataFrame([{names[c]:r[c] for c in columns} for r in rows]).to_pandas(),labels)
     base=Path(data_dir)/'controls_and_validation/in_silico_mixtures'

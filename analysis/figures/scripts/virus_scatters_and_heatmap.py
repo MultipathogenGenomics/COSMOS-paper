@@ -311,8 +311,8 @@ def plot_virus_scatters_and_heatmap(metadata_file: str, virus_nc2_file: str, vir
 
     # Position each vertical label beside its panel's row tick labels.
     heatmap_label_x = 0.16
-    species_ax.set_ylabel("Morphological\nidentification", fontsize=12,
-                          rotation=90, ha="center", va="center")
+    species_ax.set_ylabel("Expert morphological\nidentification", fontsize=12,
+                          rotation=90, ha="center", va="center", fontweight="bold")
     species_ax.yaxis.set_label_coords(
         heatmap_label_x, (species_bounds.y0 + species_bounds.y1) / 2,
         transform=fig.transFigure,
