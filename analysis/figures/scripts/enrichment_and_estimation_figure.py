@@ -22,6 +22,13 @@ def style_coverage_yaxis(ax: plt.Axes) -> None:
     ax.yaxis.set_major_formatter(FuncFormatter(lambda value, _: f"{int(value):,}"))
     ax.yaxis.set_minor_locator(NullLocator())
 
+def coverage_percentile_bounds(lower_quantile=0.25, upper_quantile=0.75):
+    depths = pl.col("coverage").filter(pl.col("coverage").is_finite())
+    return (
+        depths.quantile(lower_quantile, interpolation="linear").alias("pc_lower"),
+        depths.quantile(upper_quantile, interpolation="linear").alias("pc_upper"),
+    )
+
 
 def plot_mitochondrial_coverage(mito_df: pl.DataFrame, fig: plt.Figure, subplot_spec: plt.SubplotSpec, zoom_end: int = None, dashed_boundaries: bool = False) -> plt.Axes:
     mitochondrial_grid = subplot_spec.subgridspec(
@@ -46,6 +53,7 @@ def plot_mitochondrial_coverage(mito_df: pl.DataFrame, fig: plt.Figure, subplot_
     # log10(depth + 1). The displayed height is exactly the log10 median.
     median_coverage_df = mito_df.group_by(position_col).agg(
         (pl.lit(10.0).pow((pl.col("coverage") + 1).log(10).median()) - 1).alias("median_coverage"),
+        *coverage_percentile_bounds(),
         pl.col("sample").n_unique().alias("n_samples"),
     )
     all_positions_df = pl.DataFrame(
@@ -61,11 +69,11 @@ def plot_mitochondrial_coverage(mito_df: pl.DataFrame, fig: plt.Figure, subplot_
         .join(median_coverage_df, on=position_col, how="left")
         .with_columns(
             pl.when(pl.col("n_samples") >= minimum_samples)
-            .then(pl.col("median_coverage"))
+            .then(pl.col("median_coverage", "pc_lower", "pc_upper"))
             .otherwise(None)
-            .alias("median_coverage")
+            .name.keep()
         )
-        .select(position_col, "median_coverage")
+        .select(position_col, "median_coverage", "pc_lower", "pc_upper")
         .sort(position_col)
     )
 
@@ -92,6 +100,16 @@ def plot_mitochondrial_coverage(mito_df: pl.DataFrame, fig: plt.Figure, subplot_
         color="black",
         alpha=1,
         linewidth=1.2,
+        zorder=4,
+    )
+    mitochondrial_ax.fill_between(
+        median_coverage[position_col],
+        median_coverage["pc_lower"],
+        median_coverage["pc_upper"],
+        color="#A62635",
+        alpha=0.25,
+        linewidth=0,
+        zorder=3,
     )
 
     cox1_boundaries = (
@@ -105,7 +123,7 @@ def plot_mitochondrial_coverage(mito_df: pl.DataFrame, fig: plt.Figure, subplot_
     )
     if dashed_boundaries:
         for boundary in [cox1_boundaries["start"], cox1_boundaries["end"]]:
-            mitochondrial_ax.axvline(boundary, color="#A62635", linestyle="--", linewidth=1)
+            mitochondrial_ax.axvline(boundary, color="#A62635", linestyle="--", linewidth=1, zorder=5)
     else:
         mitochondrial_ax.axvspan(
             cox1_boundaries["start"], cox1_boundaries["end"],
@@ -266,6 +284,7 @@ def plot_virus_coverage_paneled(virus_df: pl.DataFrame, fig: plt.Figure, subplot
     # height is exactly the median of the transformed depths.
     median_df = virus_df.group_by(["virus_acronym", "position"]).agg(
         (pl.lit(10.0).pow((pl.col("coverage") + 1).log(10).median()) - 1).alias("median_coverage"),
+        *coverage_percentile_bounds(),
     ).sort(["virus_acronym", "position"])
 
     virus_grid = subplot_spec.subgridspec(
@@ -300,11 +319,20 @@ def plot_virus_coverage_paneled(virus_df: pl.DataFrame, fig: plt.Figure, subplot
             colour = "black"
         ax.plot(
             median_coverage["position"], median_coverage["median_coverage"],
-            color=colour, linewidth=1.2,
+            color=colour, linewidth=1.2, zorder=4,
         )
         genome_length = coverage_df["position"].max()
+        ax.fill_between(
+            median_coverage["position"],
+            median_coverage["pc_lower"],
+            median_coverage["pc_upper"],
+            color=colour,
+            alpha=0.25,
+            linewidth=0,
+            zorder=3,
+        )
         for boundary in [0, genome_length]:
-            ax.axvline(boundary, color="#A62635", linestyle="--", linewidth=1, clip_on=False)
+            ax.axvline(boundary, color="#A62635", linestyle="--", linewidth=1, clip_on=False, zorder=5)
 
         style_coverage_yaxis(ax)
         ax.set_xlim(0, max_position)
@@ -403,7 +431,7 @@ def plot_enrichment_and_nc2(
     virus_colours = {
         'JEV': 'tab:orange', 'KUN': 'tab:green', 'RRV': 'tab:blue',
         'BFV': 'tab:purple', 'SINDV': 'tab:brown', 'STRV': 'tab:pink',
-        'KOK': 'tab:cyan', 'EHV': 'tab:olive', 'LSV': 'black','MVEV': 'tab:red'
+        'KOK': 'tab:cyan', 'EHV': 'tab:olive', 'LSV': 'dimgrey','MVEV': 'tab:red'
     }
     virus_axes = plot_virus_coverage_paneled(virus_df, fig, virus_spec, virus_colours=virus_colours)
     # Both rows start at the same data-axis edge, despite different grid widths.
